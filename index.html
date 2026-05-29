@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Asistencia | Blockchain 603001</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<div class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <span class="led"></span>
+            <div>
+                <div class="sidebar-title">Asistencia 603001</div>
+                <div class="sidebar-sub">Telemática III · Blockchain</div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <button class="nav-item active" data-page="abrir">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                Abrir Asistencia
+            </button>
+            <button class="nav-item" data-page="marcar">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                Marcar Asistencia
+            </button>
+            <button class="nav-item" data-page="cerrar">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Cerrar Asistencia
+            </button>
+            <button class="nav-item" data-page="consultar">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 5 5-7"/></svg>
+                Reporte Sesión
+            </button>
+            <button class="nav-item" data-page="historial">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Historial On-Chain
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
+            <span class="net-badge">SEPOLIA</span>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+        <!-- Top bar: wallet -->
+        <div class="topbar">
+            <span class="wallet-label">Wallet</span>
+            <span class="wallet-addr" id="walletAddr">sin conexión</span>
+            <button class="btn" id="btnConnect" onclick="conectarWallet()">Conectar</button>
+            <label class="theme-switch">
+                <input type="checkbox" id="themeToggle">
+                <span class="switch-slider"></span>
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </label>
+        </div>
+
+        <!-- PAGE: Abrir Asistencia -->
+        <section class="page active" id="page-abrir">
+            <h2 class="page-title">Abrir Asistencia <span class="badge badge-p">PROFESOR</span></h2>
+            <div class="card">
+                <div class="card-body">
+                    <div class="field">
+                        <label>ID Sesión (1 – 16)</label>
+                        <input type="number" id="inId" min="1" max="16" placeholder="ej: 1">
+                    </div>
+                    <div class="field">
+                        <label>Tema de la clase</label>
+                        <input type="text" id="inTema" placeholder="ej: Smart Contracts en Solidity">
+                    </div>
+                    <div class="field">
+                        <label>Palabra secreta</label>
+                        <input type="text" id="inSecretoAbrir" placeholder="ej: hash256">
+                    </div>
+                    <button class="btn" onclick="abrirAsistencia()">Ejecutar → abrirAsistencia()</button>
+                    <div class="out" id="outAbrir"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE: Marcar Asistencia -->
+        <section class="page" id="page-marcar">
+            <h2 class="page-title">Marcar Asistencia <span class="badge badge-s">ESTUDIANTE</span></h2>
+            <div class="card">
+                <div class="card-body">
+                    <div class="field">
+                        <label>Palabra secreta del día</label>
+                        <input type="text" id="inSecretoMarcar" placeholder="Ingresa la clave del día">
+                    </div>
+                    <button class="btn btn-c" onclick="marcarAsistencia()">Ejecutar → marcarAsistencia()</button>
+                    <div class="out" id="outMarcar"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE: Cerrar Asistencia -->
+        <section class="page" id="page-cerrar">
+            <h2 class="page-title">Cerrar Asistencia <span class="badge badge-p">PROFESOR</span></h2>
+            <div class="card">
+                <div class="card-body">
+                    <p class="page-desc">Cierra la sesión de asistencia activa. Solo el profesor (owner del contrato) puede ejecutar esta función.</p>
+                    <button class="btn btn-r" onclick="cerrarAsistencia()">Ejecutar → cerrarAsistencia()</button>
+                    <div class="out" id="outCerrar"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE: Consultar Sesión -->
+        <section class="page" id="page-consultar">
+            <h2 class="page-title">Reporte Sesión Activa</h2>
+            <div class="card">
+                <div class="card-body">
+                    <button class="btn btn-c" onclick="consultarSesion()">Consultar sesión →</button>
+                    <div id="sesionInfo"></div>
+                    <div id="sesionAsistentes"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE: Historial -->
+        <section class="page" id="page-historial">
+            <h2 class="page-title">Historial On-Chain <span class="badge badge-b">EVENTOS</span></h2>
+            <div class="card">
+                <div class="card-body">
+                    <button class="btn btn-c" onclick="cargarHistorial()">Leer eventos → queryFilter()</button>
+                    <div id="histTabs" class="tabs" style="margin-top:14px;"></div>
+                    <div id="histContent"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/contract.js"></script>
+<script src="js/background.js"></script>
+
+</body>
+</html>
