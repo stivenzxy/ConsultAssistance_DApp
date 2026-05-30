@@ -1,4 +1,4 @@
-const CONTRACT_ADDRESS = "0xB1376b51614BAb67EEF3006E4F7708a2405c2a87";
+const CONTRACT_ADDRESS = "0x9dd64bC93D1c869e4AF823e0e5e1b9D0d9D2B28D";
 
 const ABI = [
     "function abrirAsistencia(uint256 _idSesion, string _temaClase, string _palabraSecreta)",
