@@ -19,7 +19,7 @@ async function conectarWallet() {
     }
 }
 
-// ─── ABRIR ASISTENCIA ────────────────────────────────
+
 async function abrirAsistencia() {
     const out     = document.getElementById("outAbrir");
     const id      = document.getElementById("inId").value.trim();
@@ -27,11 +27,12 @@ async function abrirAsistencia() {
     const secreto = document.getElementById("inSecretoAbrir").value.trim();
 
     if (!id || !tema || !secreto) return setOut(out, "err", "Completa todos los campos.");
+    if (!/^\d+$/.test(id))         return setOut(out, "err", "El ID de sesión debe ser un número entero.");
     if (!contrato) return setOut(out, "err", "Conecta tu wallet primero.");
 
     try {
         setOut(out, "info", "Enviando transacción...");
-        const tx = await contrato.abrirAsistencia(Number(id), tema, secreto);
+        const tx = await contrato.abrirAsistencia(parseInt(id, 10), tema, secreto);
         setOut(out, "info", `Tx enviada: ${tx.hash}\nEsperando confirmación...`);
         await tx.wait();
         setOut(out, "ok", `✓ Sesión #${id} abierta\nTema: "${tema}"\nTx: ${tx.hash}`);
@@ -40,21 +41,23 @@ async function abrirAsistencia() {
     }
 }
 
-// ─── MARCAR ASISTENCIA ───────────────────────────────
+
 async function marcarAsistencia() {
     const out     = document.getElementById("outMarcar");
+    const id      = document.getElementById("inIdMarcar").value.trim();
     const secreto = document.getElementById("inSecretoMarcar").value.trim();
 
-    if (!secreto)  return setOut(out, "err", "Ingresa la palabra secreta.");
+    if (!id || !secreto) return setOut(out, "err", "Completa todos los campos.");
+    if (!/^\d+$/.test(id)) return setOut(out, "err", "El ID de sesión debe ser un número entero.");
     if (!contrato) return setOut(out, "err", "Conecta tu wallet primero.");
 
     try {
         setOut(out, "info", "Enviando transacción...");
-        const tx = await contrato.marcarAsistencia(secreto);
+        const tx = await contrato.marcarAsistencia(parseInt(id, 10), secreto);
         setOut(out, "info", `Tx enviada: ${tx.hash}\nEsperando confirmación...`);
         await tx.wait();
         const addr = await signer.getAddress();
-        setOut(out, "ok", `✓ Asistencia registrada\nCuenta: ${addr}\nTx: ${tx.hash}`);
+        setOut(out, "ok", `✓ Asistencia registrada\nSesión: #${id}\nCuenta: ${addr}\nTx: ${tx.hash}`);
     } catch (e) {
         setOut(out, "err", "Error: " + (e.reason || e.message));
     }
@@ -63,12 +66,15 @@ async function marcarAsistencia() {
 // ─── CERRAR ASISTENCIA ───────────────────────────────
 async function cerrarAsistencia() {
     const out = document.getElementById("outCerrar");
+    const id  = document.getElementById("inIdCerrar").value.trim();
+    if (!id)           return setOut(out, "err", "Ingresa el ID de sesión.");
+    if (!/^\d+$/.test(id)) return setOut(out, "err", "El ID de sesión debe ser un número entero.");
     if (!contrato) return setOut(out, "err", "Conecta tu wallet primero.");
     try {
         setOut(out, "info", "Enviando transacción...");
-        const tx = await contrato.cerrarAsistencia();
+        const tx = await contrato.cerrarAsistencia(parseInt(id, 10));
         await tx.wait();
-        setOut(out, "ok", `✓ Asistencia cerrada\nTx: ${tx.hash}`);
+        setOut(out, "ok", `✓ Sesión #${id} cerrada\nTx: ${tx.hash}`);
     } catch (e) {
         setOut(out, "err", "Error: " + (e.reason || e.message));
     }
@@ -76,13 +82,16 @@ async function cerrarAsistencia() {
 
 // ─── CONSULTAR SESIÓN ACTUAL ─────────────────────────
 async function consultarSesion() {
-    const infoDiv = document.getElementById("sesionInfo");
-    const attDiv  = document.getElementById("sesionAsistentes");
-    if (!contrato) { infoDiv.innerHTML = msgBox("err", "Conecta tu wallet primero."); return; }
+    const infoDiv  = document.getElementById("sesionInfo");
+    const attDiv   = document.getElementById("sesionAsistentes");
+    const idInput  = document.getElementById("inIdConsultar").value.trim();
+    if (!idInput)              { infoDiv.innerHTML = msgBox("err", "Ingresa el ID de sesión."); return; }
+    if (!/^\d+$/.test(idInput)){ infoDiv.innerHTML = msgBox("err", "El ID de sesión debe ser un número entero."); return; }
+    if (!contrato)             { infoDiv.innerHTML = msgBox("err", "Conecta tu wallet primero."); return; }
 
     try {
-        const [id, tema, activa, total] = await contrato.consultarSesion();
-        const asistentes = await contrato.verTotalAsistentes();
+        const [id, tema, activa, fecha] = await contrato.consultarSesion(parseInt(idInput, 10));
+        const asistentes = await contrato.verTotalAsistentes(parseInt(idInput, 10));
 
         const estadoClass = activa ? "ok-val" : "err-val";
         const estadoText  = activa ? "● ACTIVA" : "○ CERRADA";
@@ -102,8 +111,8 @@ async function consultarSesion() {
                     <div class="val">${tema}</div>
                 </div>
                 <div class="stat full">
-                    <div class="lbl">Total asistentes</div>
-                    <div class="val ok-val">${total}</div>
+                    <div class="lbl">Fecha apertura</div>
+                    <div class="val">${fmtFecha(fecha)}</div>
                 </div>
             </div>`;
 

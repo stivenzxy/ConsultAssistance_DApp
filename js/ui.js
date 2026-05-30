@@ -32,6 +32,22 @@ function fmtFecha(ts) {
     });
 }
 
+
+document.addEventListener('DOMContentLoaded', () => {
+    const legacyToggle = document.getElementById('legacyToggle');
+    const savedLegacy  = localStorage.getItem('legacyMode');
+
+    if (savedLegacy !== 'off') {
+        document.body.classList.add('legacy');
+        legacyToggle.checked = true;
+    }
+
+    legacyToggle.addEventListener('change', () => {
+        document.body.classList.toggle('legacy');
+        localStorage.setItem('legacyMode', document.body.classList.contains('legacy') ? 'on' : 'off');
+    });
+});
+
 // ─── THEME TOGGLE ────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     const toggle = document.getElementById('themeToggle');
